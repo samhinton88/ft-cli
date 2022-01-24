@@ -1,0 +1,35 @@
+{
+  "name": "cli",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "engines": {
+    "node": ">=12.20"
+  },
+  "bin": {
+    "ft": "dist/index.js"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "tsc -w"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/node": "^17.0.8",
+    "@types/prettier": "^2.4.3",
+    "@types/yargs": "^17.0.8",
+    "ts-node-dev": "^1.1.8",
+    "typescript": "^4.5.4"
+  },
+  "dependencies": {
+    "@prettier/plugin-php": "^0.17.6",
+    "cross-fetch": "^3.1.4",
+    "ejs": "^3.1.6",
+    "emmet": "^2.3.5",
+    "fetch-snippet-templater": "^2.2.1",
+    "install": "^0.13.0",
+    "prettier": "^2.5.1",
+    "yargs": "^17.3.1"
+  }
+}
