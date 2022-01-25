@@ -52,11 +52,20 @@ export interface TemplateInterface {
 
 
 export const templateExecutionService = {
-  generateSnippet: async (snippet: SnippetInterface, params: Parameter,  args: any) => {
+  generateSnippet: async (snippet: SnippetInterface, params: Parameter[],  args: any) => {
+    const argsWithDefaults = params.reduce((acc, param) => {
+      if (param.defaultValue) {
+        acc[param.name] = acc[param.name] || param.defaultValue;
+        return acc;
+      }
+
+      return acc;
+    }, args);
+    
     const snippetData = { 
       template: snippet.content,
       params,
-      args: { filePath: './', dirPath: './', ...args },
+      args: { filePath: './', dirPath: './', ...argsWithDefaults },
       postProcess: postProcessors[snippet.language] 
     }
 
