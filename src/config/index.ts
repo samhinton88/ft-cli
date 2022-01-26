@@ -1,1 +1,1 @@
-export const API_ROOT = 'http://localhost:4646';
+export const API_ROOT = 'https://fetch-template-api.herokuapp.com';
