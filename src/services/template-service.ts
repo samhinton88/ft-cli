@@ -1,7 +1,7 @@
-import { engine, resolvers } from 'fetch-snippet-templater';
+import { resolvers } from 'fetch-snippet-templater';
 import prettier, { RequiredOptions } from 'prettier'
 import expand from 'emmet'
-import phpPlugin from '@prettier/plugin-php'
+import phpPlugin from '@prettier/plugin-php';
 
 
 const phpPostProcessor = (code: string) => {
@@ -61,7 +61,7 @@ export const templateExecutionService = {
 
       return acc;
     }, args);
-    
+
     const snippetData = { 
       template: snippet.content,
       params,
@@ -74,6 +74,14 @@ export const templateExecutionService = {
     if (res.postProcess) {
       res.localSnippet = res.postProcess(res.localSnippet);
     }
+
+    snippet.target = (await resolvers.mapResolver({ 
+      template: snippet.target,
+      params,
+      args: { filePath: './', dirPath: './', ...argsWithDefaults },
+      postProcess: null
+    })).localSnippet;
+
 
     return res;
   }
