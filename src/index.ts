@@ -105,16 +105,11 @@ const run = async () => {
 
   yargs.default(parameters.reduce((acc: any, param: any) => ({ ...acc, [param.name]: param.default }), {}));
 
-  const done = await Promise.all(
+  const snippetsWithTargets = (await Promise.all(
     snippets.map((snippet: SnippetInterface) =>
       templateExecutionService.generateSnippet(snippet, parameters, yargs.argv)
     )
-  );
-
-  const snippetsWithTargets = done.map((snippet: any, i) => ({
-    ...snippet,
-    target: snippets[i].target,
-  }));
+  )).flat();
 
   if (mode === '_demo') {
     snippetsWithTargets.forEach((snippet) => {

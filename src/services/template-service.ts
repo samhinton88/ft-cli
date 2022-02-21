@@ -39,6 +39,7 @@ export interface SnippetInterface {
   language: string;
   content: string;
   postProcess: string;
+  loop?: { collectionParameter: string, itemName: string };
 }
 
 export interface TemplateInterface {
@@ -62,6 +63,38 @@ export const templateExecutionService = {
       return acc;
     }, args);
 
+    if (snippet.loop) {
+      const { collectionParameter, itemName } = snippet.loop
+      const iterable = args[collectionParameter];
+      const snippetsForLoop = await Promise.all(iterable.map((item: any) => {
+        const snippetData = { 
+          template: snippet.content,
+          params,
+          args: { filePath: './', dirPath: './',  ...argsWithDefaults, [itemName]: item, },
+          postProcess: postProcessors[snippet.language] 
+        }
+        return resolvers.mapResolver(snippetData, () => {},[])
+      }))
+
+      snippetsForLoop.forEach((snippet) => {
+        if (snippet.postProcess) {
+          snippet.localSnippet = snippet.postProcess(snippet.localSnippet)
+        }
+      })
+
+      const resolvedLoopTargets = (await Promise.all(iterable.map((item: any) => {
+        return resolvers.mapResolver({ 
+          template: snippet.target,
+          params,
+          args: { filePath: './', dirPath: './', ...argsWithDefaults,  [itemName]: item, },
+          postProcess: null
+        })
+      }))).map((res: any) => res.localSnippet);
+      
+      return snippetsForLoop.map((s: any, i) =>{ s.target = resolvedLoopTargets[i]; return s })
+
+    }
+
     const snippetData = { 
       template: snippet.content,
       params,
@@ -75,7 +108,7 @@ export const templateExecutionService = {
       res.localSnippet = res.postProcess(res.localSnippet);
     }
 
-    snippet.target = (await resolvers.mapResolver({ 
+    res.target = (await resolvers.mapResolver({ 
       template: snippet.target,
       params,
       args: { filePath: './', dirPath: './', ...argsWithDefaults },
