@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { argv } from 'yargs';
+import yargs, { argv } from 'yargs';
 import fetch from 'cross-fetch';
 import { API_ROOT } from './config';
 import { SnippetInterface, templateExecutionService } from './services';
@@ -27,6 +27,8 @@ const run = async () => {
       body: JSON.stringify({ email, password }),
       headers: { 'Content-Type': 'application/json' },
     }).then((d) => d.json());
+
+    console.log('Logged in!')
 
     return await writeFileWithDirPath(
       __dirname + '/creds/auth.json',
@@ -85,9 +87,27 @@ const run = async () => {
 
   const { snippets, parameters } = res;
 
+  parameters.reduce((acc: typeof yargs, param: any) => {
+    if (param.type === 'stringArray') {
+      yargs.array(param.name)
+    }
+
+    if (param.type === 'number') {
+      yargs.number(param.name)
+    }
+
+    if (param.type === 'boolean') {
+      yargs.boolean(param.name)
+    }
+
+    return acc;
+  }, yargs);
+
+  yargs.default(parameters.reduce((acc: any, param: any) => ({ ...acc, [param.name]: param.default }), {}));
+
   const done = await Promise.all(
     snippets.map((snippet: SnippetInterface) =>
-      templateExecutionService.generateSnippet(snippet, parameters, args)
+      templateExecutionService.generateSnippet(snippet, parameters, yargs.argv)
     )
   );
 
