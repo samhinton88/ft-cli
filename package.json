@@ -1,6 +1,6 @@
 {
   "name": "fetch-template-cli",
-  "version": "0.0.7",
+  "version": "0.0.81",
   "description": "",
   "main": "dist/index.js",
   "engines": {

@@ -168,7 +168,7 @@ const run = async () => {
       (d) => d.json()
     );
   } else {
-    res = await fetch(API_ROOT + "/templates/one?name=" + name, {
+    res = await fetch(API_ROOT + "/templates/one?name=" + name + "&owner=" + creds.userId, {
       headers,
     }).then((d) => d.json());
   }
