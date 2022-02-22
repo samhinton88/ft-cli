@@ -1,6 +1,6 @@
 {
   "name": "fetch-template-cli",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "description": "",
   "main": "dist/index.js",
   "engines": {
@@ -36,6 +36,6 @@
     "install": "^0.13.0",
     "prettier": "^2.5.1",
     "yargs": "^17.3.1",
-    "open": "^8.4.0",
+    "open": "^8.4.0"
   }
 }
