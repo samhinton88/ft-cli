@@ -19,9 +19,11 @@
   "license": "ISC",
   "devDependencies": {
     "@types/ejs": "^3.1.0",
+    "@types/inquirer": "^8.2.0",
     "@types/node": "^17.0.8",
     "@types/prettier": "^2.4.3",
     "@types/yargs": "^17.0.8",
+    "open": "^8.4.0",
     "ts-node-dev": "^1.1.8",
     "typescript": "^4.5.4"
   },
@@ -31,6 +33,7 @@
     "ejs": "^3.1.6",
     "emmet": "^2.3.5",
     "fetch-snippet-templater": "^2.2.1",
+    "inquirer": "^8.2.0",
     "install": "^0.13.0",
     "prettier": "^2.5.1",
     "yargs": "^17.3.1"
