@@ -4,8 +4,8 @@ import fetch from "cross-fetch";
 import open from "open";
 import inquirer from "inquirer";
 import { API_ROOT } from "./config";
-import { SnippetInterface, templateExecutionService } from "./services";
-import { writeFileWithDirPath } from "./utils";
+import { SnippetInterface, templateExecutionService, workflowService } from "./services";
+import { buildTree, questionnaireInterpret, toDirectoryTree, writeFileWithDirPath } from "./utils";
 
 const loopPrompt = async (
   ...instructions: { func: (d: any) => void; message: string }[]
@@ -32,7 +32,7 @@ const bareWords = (argv as any)._;
 const args = argv as any;
 
 const run = async () => {
-  const [name, mode] = bareWords;
+  const [name, mode, subMode] = bareWords;
 
   if (!name) return;
 
@@ -127,8 +127,76 @@ const run = async () => {
     return;
   }
 
+  
+
   const isPublic = ["welcome"].includes(name);
   const creds: any = require("./creds/auth.json");
+
+
+  if (name === 'flow') {
+    const flowName = mode;
+   
+    const fetchedWorkflow = await workflowService.findOneByName({ name: flowName, owner: creds.userId })
+
+    if (!fetchedWorkflow) {
+      return
+    }
+
+
+    const { questionnaires, templates } = fetchedWorkflow;
+
+    const questions = questionnaires.map(questionnaire => questionnaire.questions).flat();
+
+    const args = await questionnaireInterpret(questions)
+
+    const snippets = templates.map(t => t.snippets).flat();
+    const parameters = templates.map(t => t.parameters).flat();
+
+    const snippetsWithTargets = (
+      await Promise.all(
+        snippets.map((snippet: SnippetInterface) =>
+          templateExecutionService.generateSnippet(
+            snippet,
+            parameters,
+            args
+          )
+        )
+      )
+    ).flat();
+
+    const tree = toDirectoryTree(snippetsWithTargets);
+    const treeString = tree.map(t => buildTree(t)).join('\n')
+    
+
+    if (subMode === "_demo") {
+      snippetsWithTargets.forEach((snippet) => {
+        console.log(`${snippet.target}
+  ${snippet.localSnippet}`);
+      });
+    } else {
+      const { confirmWrite } = await inquirer.prompt([
+        {
+          type: 'confirm',
+          name: 'confirmWrite',
+          message: 'The following files and folders will be written to disc:\n' + treeString + '\n\nContinue?'
+        }
+      ]);
+
+      if (!confirmWrite) {
+        return 
+      }
+      await Promise.all(
+        snippetsWithTargets.map((snippet) => {
+          return snippet.target === "stdout"
+            ? console.log(snippet.localSnippet)
+            : writeFileWithDirPath("./" + snippet.target, snippet.localSnippet);
+        })
+      );
+    }
+
+
+    return;
+  }
 
   if (!isPublic && !creds) return console.log("Please login with ft login");
   const headers: any = creds.isGitHub
