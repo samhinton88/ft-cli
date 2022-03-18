@@ -4,8 +4,17 @@ import fetch from "cross-fetch";
 import open from "open";
 import inquirer from "inquirer";
 import { API_ROOT } from "./config";
-import { SnippetInterface, templateExecutionService, workflowService } from "./services";
-import { buildTree, questionnaireInterpret, toDirectoryTree, writeFileWithDirPath } from "./utils";
+import {
+  SnippetInterface,
+  templateExecutionService,
+  workflowService,
+} from "./services";
+import {
+  buildTree,
+  questionnaireInterpret,
+  toDirectoryTree,
+  writeFileWithDirPath,
+} from "./utils";
 
 const loopPrompt = async (
   ...instructions: { func: (d: any) => void; message: string }[]
@@ -61,7 +70,10 @@ const run = async () => {
 
   if (name === "github-login") {
     const res = await fetch(
-      GITHUB_AUTHORIZE_URL + "?client_id=" + GITHUB_CLIENT_ID + '&scope=user:email',
+      GITHUB_AUTHORIZE_URL +
+        "?client_id=" +
+        GITHUB_CLIENT_ID +
+        "&scope=user:email",
       {
         method: "POST",
       }
@@ -102,88 +114,100 @@ const run = async () => {
               headers: { Accept: "application/json" },
             }
           ).then((d) => d.json());
-          console.log(res)
-          const user = await fetch(
-            API_ROOT + "/users/authenticate-github",
-            {
-              method: "POST",
-              body: JSON.stringify({ access_token: res.access_token }),
-              headers: { 'Content-Type': "application/json" },
-            }
-          ).then((d) => d.json());
+
+          const user = await fetch(API_ROOT + "/users/authenticate-github", {
+            method: "POST",
+            body: JSON.stringify({ access_token: res.access_token }),
+            headers: { "Content-Type": "application/json" },
+          }).then((d) => d.json());
 
           await writeFileWithDirPath(
             __dirname + "/creds/auth.json",
-            JSON.stringify({ isGitHub: true, userId: user._id, ...res }, null, 2)
+            JSON.stringify(
+              { isGitHub: true, userId: user._id, ...res },
+              null,
+              2
+            )
           );
 
-          console.log('Logged in with GitHub, email: ', user.email)
+          console.log("Logged in with GitHub, email: ", user.email);
           process.exit(0);
         },
-      },
-
+      }
     );
 
     return;
   }
 
-  
-
   const isPublic = ["welcome"].includes(name);
   const creds: any = require("./creds/auth.json");
 
+  if (!isPublic && !creds) return console.log("Please login with ft login");
+  const headers: any = creds.isGitHub
+    ? { "X-GH-AUTH": creds.access_token }
+    : { Authority: creds.token };
 
-  if (name === 'flow') {
-    const flowName = mode;
-   
-    const fetchedWorkflow = await workflowService.findOneByName({ name: flowName, owner: creds.userId })
+  if (name === "flow") {
+    if (mode === 'list') {
 
-    if (!fetchedWorkflow) {
+      const flows = await workflowService.findAllByOwner({ owner: creds.userId });
+
+      flows.forEach((flow: any) => console.log(flow.name));
       return
     }
 
+    const flowName = mode;
+
+    const fetchedWorkflow = await workflowService.findOneByName({
+      name: flowName,
+      owner: creds.userId,
+    });
+
+    if (!fetchedWorkflow) {
+      return;
+    }
 
     const { questionnaires, templates } = fetchedWorkflow;
 
-    const questions = questionnaires.map(questionnaire => questionnaire.questions).flat();
+    const questions = questionnaires
+      .map((questionnaire) => questionnaire.questions)
+      .flat();
 
-    const args = await questionnaireInterpret(questions)
+    const args = await questionnaireInterpret(questions);
 
-    const snippets = templates.map(t => t.snippets).flat();
-    const parameters = templates.map(t => t.parameters).flat();
+    const snippets = templates.map((t) => t.snippets).flat();
+    const parameters = templates.map((t) => t.parameters).flat();
 
     const snippetsWithTargets = (
       await Promise.all(
         snippets.map((snippet: SnippetInterface) =>
-          templateExecutionService.generateSnippet(
-            snippet,
-            parameters,
-            args
-          )
+          templateExecutionService.generateSnippet(snippet, parameters, args)
         )
       )
     ).flat();
 
     const tree = toDirectoryTree(snippetsWithTargets);
-    const treeString = tree.map(t => buildTree(t)).join('\n')
-    
+    const treeString = tree.map((t) => buildTree(t)).join("\n");
 
     if (subMode === "_demo") {
       snippetsWithTargets.forEach((snippet) => {
         console.log(`${snippet.target}
-  ${snippet.localSnippet}`);
+    ${snippet.localSnippet}`);
       });
     } else {
       const { confirmWrite } = await inquirer.prompt([
         {
-          type: 'confirm',
-          name: 'confirmWrite',
-          message: 'The following files and folders will be written to disc:\n' + treeString + '\n\nContinue?'
-        }
+          type: "confirm",
+          name: "confirmWrite",
+          message:
+            "The following files and folders will be written to disc:\n" +
+            treeString +
+            "\n\nContinue?",
+        },
       ]);
 
       if (!confirmWrite) {
-        return 
+        return;
       }
       await Promise.all(
         snippetsWithTargets.map((snippet) => {
@@ -194,14 +218,8 @@ const run = async () => {
       );
     }
 
-
     return;
   }
-
-  if (!isPublic && !creds) return console.log("Please login with ft login");
-  const headers: any = creds.isGitHub
-    ? { "X-GH-AUTH": creds.access_token }
-    : { Authority: creds.token };
 
   // Authenticated Flow Starts Here
   try {
@@ -236,9 +254,12 @@ const run = async () => {
       (d) => d.json()
     );
   } else {
-    res = await fetch(API_ROOT + "/templates/one?name=" + name + "&owner=" + creds.userId, {
-      headers,
-    }).then((d) => d.json());
+    res = await fetch(
+      API_ROOT + "/templates/one?name=" + name + "&owner=" + creds.userId,
+      {
+        headers,
+      }
+    ).then((d) => d.json());
   }
 
   if (!res) {

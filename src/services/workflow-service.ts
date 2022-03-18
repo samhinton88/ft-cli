@@ -36,4 +36,9 @@ export const workflowService = {
       API_ROOT + "/workflow/one?name=" + name + "&owner=" + owner
     ).then((res) => res.json());
   },
+  findAllByOwner: async ({ owner }: { owner: string }) => {
+      return await fetch(
+          API_ROOT + "/workflow?owner=" + owner
+      ).then(res => res.json())
+  }
 };
