@@ -287,7 +287,7 @@ const run = async () => {
 
   yargs.default(
     parameters.reduce(
-      (acc: any, param: any) => ({ ...acc, [param.name]: param.default }),
+      (acc: any, param: any) => ({ ...acc, [param.name]: param.type === 'stringArray' ? param.default || [] : param.default }),
       {}
     )
   );
