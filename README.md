@@ -1,7 +1,7 @@
 # ft-cli
 
 
-The fetch-template CLI provides an interface with [Fetch Template](https://www.fetch-template.com).
+The fetch-template CLI provides an interface with [Fetch Template](https://www.fetch-template.com), a service for organizing and executing code patterns.
 
 Installation: 
 ```sh
